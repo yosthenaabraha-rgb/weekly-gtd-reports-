@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mustang GTD Weekly Sentiment Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display&family=DM+Mono:wght@300;400&display=swap');
+:root{--bg:#080b0f;--surface:#0d1117;--border:#1c2333;--gold:#e8a020;--red:#e05555;--dkred:#991b1b;--green:#3dba7a;--blue:#4a8fe8;--muted:#8a8fa8;--text:#d8dde8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Serif Display',serif;min-height:100vh;}
+.hero{padding:44px 52px 0;border-bottom:1px solid var(--border);background:linear-gradient(150deg,#0f1825 0%,var(--bg) 65%);}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;}
+.kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--gold);margin-bottom:10px;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:2px;line-height:.95;color:#fff;}
+h1 span{color:var(--gold);}
+.sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:12px;letter-spacing:.5px;}
+.mood-val{font-family:'Bebas Neue',sans-serif;font-size:80px;line-height:1;text-align:right;}
+.mood-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--muted);text-align:right;margin-top:4px;}
+.tabs{display:flex;}
+.tab{cursor:pointer;padding:11px 24px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;}
+.tab:hover{color:var(--gold);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.content{padding:32px 52px 60px;}
+.pane{display:none;}
+.pane.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:3px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+.kpi{padding:20px 22px;}
+.kpi-l{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;}
+.kpi-v{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);line-height:1;}
+.kpi-v.sm{font-size:15px;line-height:1.3;}
+.kpi-s{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+.cp{padding:22px;}
+.cl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;}
+.full{padding:22px;margin-bottom:14px;}
+.sent-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;padding:10px 0;}
+.sc{text-align:center;}
+.sr{width:76px;height:76px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;}
+.si{width:52px;height:52px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;}
+.sl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted);}
+.thr-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);}
+.tr{padding:12px 16px;border-bottom:1px solid #111827;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s;}
+.tr:hover{background:#111827;}
+.tr.sel{background:#131c2e;border-left:2px solid var(--gold);}
+.tdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tt{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tc{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.lay2{display:grid;grid-template-columns:1fr 340px;gap:14px;}
+.det{padding:22px;align-self:start;}
+.de{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;}
+.dt{font-size:16px;margin-bottom:14px;line-height:1.3;}
+.bdg{display:inline-block;padding:3px 9px;border-radius:2px;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;margin-right:5px;margin-bottom:14px;}
+.dr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #111827;}
+.dk{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+.dv{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;}
+.leg{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;}
+.li{display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+.ld{width:8px;height:8px;border-radius:50%;}
+.kw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.kw-card{padding:18px;}
+.kw-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;}
+.kw-item{font-size:13px;margin-bottom:6px;line-height:1.4;}
+.kw-phrase{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px;padding-left:8px;border-left:2px solid var(--border);}
+.hot-wrap{padding:18px;}
+.hot-tag{display:inline-block;padding:4px 10px;border-radius:12px;font-family:'DM Mono',monospace;font-size:9px;margin:3px;background:#1c2333;color:var(--gold);border:1px solid var(--border);}
+.ai-btn{background:linear-gradient(135deg,var(--gold),#c45000);border:none;color:#fff;padding:10px 26px;font-family:'DM Mono',monospace;letter-spacing:3px;font-size:10px;cursor:pointer;border-radius:2px;}
+.ai-btn:disabled{opacity:.4;cursor:not-allowed;}
+.ai-out{margin-top:24px;border-top:1px solid var(--border);padding-top:24px;}
+.ai-ey{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);margin-bottom:14px;}
+.ai-out p{font-size:14px;line-height:1.85;color:#b0b8cc;margin-bottom:14px;}
+.notice{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:12px;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-top">
+    <div>
+      <div class="kicker">Mustang GTD Forum &mdash; Weekly Intelligence</div>
+      <h1>SENTIMENT <span>REPORT</span></h1>
+      <div class="sub" id="subline"></div>
+    </div>
+    <div><div class="mood-val" id="moodVal"></div><div class="mood-lbl">Weekly Mood</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="sw('overview')">Overview</div>
+    <div class="tab" onclick="sw('keywords')">Keywords</div>
+    <div class="tab" onclick="sw('trends')">Daily Trends</div>
+    <div class="tab" onclick="sw('threads')">Threads</div>
+    <div class="tab" onclick="sw('ai')">AI Report</div>
+  </div>
+</div>
+<div class="content">
+<div id="pane-overview" class="pane active">
+  <div class="g4" id="kpiGrid"></div>
+  <div class="g2">
+    <div class="card cp"><div class="cl">Sentiment Distribution</div><div class="sent-row" id="sentCircles"></div></div>
+    <div class="card cp"><div class="cl">Engagement by Category</div><canvas id="catChart" height="220"></canvas></div>
+  </div>
+  <div class="card full">
+    <div class="cl">Replies vs Views &mdash; All Threads</div>
+    <canvas id="scatterChart" height="85"></canvas>
+    <div class="leg" id="legend"></div>
+  </div>
+</div>
+<div id="pane-keywords" class="pane">
+  <div class="card full" style="margin-bottom:14px">
+    <div class="cl">Tracked Keyword Activity</div>
+    <div id="kwContent"></div>
+  </div>
+  <div class="card full">
+    <div class="cl">Auto-Detected Hot Topics This Week</div>
+    <div class="hot-wrap" id="hotTopics"></div>
+    <p class="notice">Hot topics are automatically detected from thread content each week.</p>
+  </div>
+</div>
+<div id="pane-trends" class="pane">
+  <div class="card full">
+    <div class="cl">Daily Average Sentiment Score</div>
+    <canvas id="trendLine" height="75"></canvas>
+  </div>
+  <div style="height:14px"></div>
+  <div class="g2">
+    <div class="card cp"><div class="cl">Daily Thread Count</div><canvas id="countBar" height="190"></canvas></div>
+    <div class="card cp"><div class="cl">Sentiment Mix by Day</div><canvas id="stackBar" height="190"></canvas></div>
+  </div>
+</div>
+<div id="pane-threads" class="pane">
+  <div class="lay2">
+    <div class="card" style="overflow:hidden">
+      <div class="thr-hdr">All Threads &mdash; Ranked by Engagement &mdash; No usernames included</div>
+      <div id="threadList"></div>
+    </div>
+    <div class="card det" id="detPanel">
+      <div style="text-align:center;padding:44px 0;color:#1c2333;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px">
+        <div style="font-size:26px;margin-bottom:10px">&#8592;</div>Select a thread
+      </div>
+    </div>
+  </div>
+</div>
+<div id="pane-ai" class="pane">
+  <div class="card full">
+    <div class="cl">AI Weekly Intelligence Report</div>
+    <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:22px;font-style:italic">Click below for a full written analysis of this week's forum activity.</p>
+    <button class="ai-btn" id="aiBtn" onclick="getAI()">Generate Weekly Analysis</button>
+    <div id="aiOut"></div>
+    <p class="notice">No usernames or personal identifiers are used in this analysis.</p>
+  </div>
+  <div class="g3" id="hiGrid"></div>
+</div>
+</div>
+<script>
+const THREADS=[{"title": "Houston GTD's", "link": "https://mustanggtdforum.com/index.php?threads/houston-gtds.143/", "replies": 49, "views": 4000, "engagement": 890, "sentiment": {"label": "Very Positive", "score": 0.9, "color": "#22c55e"}, "category": "Community", "keywords": ["Delivery Delays"], "mood_phrase": "Highly enthusiastic community response", "comment_count": 16}, {"title": "Any Truth to this...Canceled Orders?  Click Bait?", "link": "https://mustanggtdforum.com/index.php?threads/any-truth-to-this-canceled-orders-click-bait.545/", "replies": 30, "views": 1000, "engagement": 400, "sentiment": {"label": "Very Concerned", "score": -1.0, "color": "#b91c1c"}, "category": "Buying Process", "keywords": [], "mood_phrase": "Strong community concern detected", "comment_count": 19}, {"title": "Configurator issues", "link": "https://mustanggtdforum.com/index.php?threads/configurator-issues.556/", "replies": 29, "views": 822, "engagement": 372, "sentiment": {"label": "Very Concerned", "score": -1.0, "color": "#b91c1c"}, "category": "Buying Process", "keywords": ["Delivery Delays", "Paint"], "mood_phrase": "Strong community concern detected", "comment_count": 20}, {"title": "New Pre-shipment Audit", "link": "https://mustanggtdforum.com/index.php?threads/new-pre-shipment-audit.551/", "replies": 27, "views": 1000, "engagement": 370, "sentiment": {"label": "Positive", "score": 0.45, "color": "#86efac"}, "category": "Production & Delivery", "keywords": ["Delivery Delays", "Shipping Delays", "Paint", "Delivery Scheduling"], "mood_phrase": "Generally positive community sentiment", "comment_count": 20}, {"title": "Tire longevity stock", "link": "https://mustanggtdforum.com/index.php?threads/tire-longevity-stock.458/", "replies": 17, "views": 680, "engagement": 238, "sentiment": {"label": "Concerned", "score": -0.6, "color": "#ef4444"}, "category": "Ownership & Mods", "keywords": [], "mood_phrase": "Strong community concern detected", "comment_count": 17}, {"title": "Ready to order", "link": "https://mustanggtdforum.com/index.php?threads/ready-to-order.561/", "replies": 13, "views": 420, "engagement": 172, "sentiment": {"label": "Neutral", "score": -0.15, "color": "#94a3b8"}, "category": "Buying Process", "keywords": ["Delivery Delays", "Paint"], "mood_phrase": "Mixed or neutral discussion tone", "comment_count": 12}, {"title": "GTD Financing Options", "link": "https://mustanggtdforum.com/index.php?threads/gtd-financing-options.486/", "replies": 9, "views": 683, "engagement": 158, "sentiment": {"label": "Neutral", "score": 0.15, "color": "#94a3b8"}, "category": "Buying Process", "keywords": ["Titling / Liens / LLCs", "Delivery Delays"], "mood_phrase": "Mixed or neutral discussion tone", "comment_count": 10}, {"title": "Lower carbon package", "link": "https://mustanggtdforum.com/index.php?threads/lower-carbon-package.559/", "replies": 10, "views": 334, "engagement": 133, "sentiment": {"label": "Neutral", "score": 0.0, "color": "#94a3b8"}, "category": "Ownership & Mods", "keywords": ["Paint"], "mood_phrase": "Mixed or neutral discussion tone", "comment_count": 11}, {"title": "Trailer Stickers - Dealer", "link": "https://mustanggtdforum.com/index.php?threads/trailer-stickers-dealer.564/", "replies": 9, "views": 225, "engagement": 112, "sentiment": {"label": "Positive", "score": 0.3, "color": "#86efac"}, "category": "Buying Process", "keywords": [], "mood_phrase": "Generally positive community sentiment", "comment_count": 10}, {"title": "Outdoor Car Cover - Moda Miami Car Show", "link": "https://mustanggtdforum.com/index.php?threads/outdoor-car-cover-moda-miami-car-show.552/", "replies": 8, "views": 308, "engagement": 110, "sentiment": {"label": "Very Positive", "score": 0.9, "color": "#22c55e"}, "category": "Ownership & Mods", "keywords": ["Shipping Delays"], "mood_phrase": "Highly enthusiastic community response", "comment_count": 9}, {"title": "PPF  and CERAMIC COAT", "link": "https://mustanggtdforum.com/index.php?threads/ppf-and-ceramic-coat.566/", "replies": 7, "views": 157, "engagement": 85, "sentiment": {"label": "Neutral", "score": 0.0, "color": "#94a3b8"}, "category": "General", "keywords": ["Paint"], "mood_phrase": "Mixed or neutral discussion tone", "comment_count": 7}, {"title": "Extended color palette timeline", "link": "https://mustanggtdforum.com/index.php?threads/extended-color-palette-timeline.562/", "replies": 4, "views": 102, "engagement": 50, "sentiment": {"label": "Neutral", "score": 0.15, "color": "#94a3b8"}, "category": "Production & Delivery", "keywords": ["Paint"], "mood_phrase": "Mixed or neutral discussion tone", "comment_count": 5}];
+const TREND=[{"day": "Thu Mar 05", "score": 0.01, "count": 12, "Very Positive": 2, "Positive": 2, "Neutral": 5, "Concerned": 1, "Very Concerned": 2}];
+const KW_MAP={"Delivery Delays": 5, "Paint": 6, "Shipping Delays": 2, "Delivery Scheduling": 1, "Titling / Liens / LLCs": 1};
+const WEEK="March 05, 2026";
+const HOT=[];
+
+const SC={"Very Positive":"#22c55e","Positive":"#86efac","Neutral":"#8a8fa8","Concerned":"#ef4444","Very Concerned":"#991b1b"};
+const CC={"Buying Process":"#e8a020","Production & Delivery":"#4a8fe8","Ownership & Mods":"#3dba7a","Community":"#a78bfa","Legal & Ownership":"#f472b6","General":"#8a8fa8"};
+
+const avgSent=+(THREADS.reduce((s,t)=>s+t.sentiment.score,0)/THREADS.length).toFixed(2);
+const totalEng=THREADS.reduce((s,t)=>s+t.engagement,0);
+const top=THREADS.reduce((a,b)=>a.engagement>b.engagement?a:b);
+const moodLbl=avgSent>0.6?"VERY POSITIVE":avgSent>0.2?"POSITIVE":avgSent>-0.2?"NEUTRAL":avgSent>-0.5?"CONCERNED":"VERY CONCERNED";
+const moodClr=avgSent>0.6?"#22c55e":avgSent>0.2?"#86efac":avgSent>-0.2?"#8a8fa8":avgSent>-0.5?"#ef4444":"#991b1b";
+
+document.getElementById('subline').textContent="Week of "+WEEK+"   |   "+THREADS.length+" threads analysed   |   No usernames included";
+document.getElementById('moodVal').textContent=moodLbl;
+document.getElementById('moodVal').style.color=moodClr;
+
+document.getElementById('kpiGrid').innerHTML=[
+  {l:"Unique Threads",v:THREADS.length,s:"analysed this week"},
+  {l:"Total Engagement",v:totalEng.toLocaleString(),s:"combined score"},
+  {l:"Avg Sentiment",v:avgSent,s:"-1 (neg) to +1 (pos)"},
+  {l:"Top Thread",v:top.title.slice(0,28)+(top.title.length>28?"...":""),s:top.engagement+" engagement",sm:true},
+].map(k=>'<div class="card kpi"><div class="kpi-l">'+k.l+'</div><div class="kpi-v '+(k.sm?'sm':'')+'">'+k.v+'</div><div class="kpi-s">'+k.s+'</div></div>').join('');
+
+const sCounts=THREADS.reduce((a,t)=>{a[t.sentiment.label]=(a[t.sentiment.label]||0)+1;return a;},{});
+document.getElementById('sentCircles').innerHTML=Object.entries(sCounts).map(([lbl,cnt])=>{
+  const pct=(cnt/THREADS.length*360).toFixed(0),col=SC[lbl]||"#8a8fa8";
+  return '<div class="sc"><div class="sr" style="background:conic-gradient('+col+' '+pct+'deg,#1c2333 0deg)"><div class="si" style="color:'+col+'">'+cnt+'</div></div><div class="sl">'+lbl.toUpperCase()+'</div></div>';
+}).join('');
+
+const cMap={};
+THREADS.forEach(t=>{if(!cMap[t.category])cMap[t.category]={total:0,count:0};cMap[t.category].total+=t.engagement;cMap[t.category].count+=1;});
+const cL=Object.keys(cMap);
+new Chart(document.getElementById('catChart'),{type:'bar',data:{labels:cL,datasets:[{data:cL.map(c=>Math.round(cMap[c].total/cMap[c].count)),backgroundColor:cL.map(c=>CC[c]||"#8a8fa8"),borderRadius:3}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}},y:{ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}}}}});
+
+const sDS=Object.entries(SC).map(([lbl,col])=>({label:lbl,data:THREADS.filter(t=>t.sentiment.label===lbl).map(t=>({x:t.replies,y:t.views,title:t.title})),backgroundColor:col+'cc',pointRadius:7,pointHoverRadius:10}));
+new Chart(document.getElementById('scatterChart'),{type:'scatter',data:{datasets:sDS},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.raw.title+' - '+ctx.raw.x+'r / '+ctx.raw.y.toLocaleString()+'v';}}}},scales:{x:{title:{display:true,text:'Replies',color:'#8a8fa8'},ticks:{color:'#8a8fa8'},grid:{color:'#1c2333'}},y:{title:{display:true,text:'Views',color:'#8a8fa8'},ticks:{color:'#8a8fa8'},grid:{color:'#1c2333'}}}}});
+document.getElementById('legend').innerHTML=Object.entries(SC).map(([l,c])=>'<div class="li"><div class="ld" style="background:'+c+'"></div>'+l+'</div>').join('');
+
+var kwHTML='';
+if(Object.keys(KW_MAP).length>0){
+  kwHTML='<div class="kw-grid">';
+  Object.entries(KW_MAP).forEach(function(entry){
+    var kw=entry[0],cnt=entry[1];
+    var matching=THREADS.filter(t=>t.keywords&&t.keywords.includes(kw));
+    kwHTML+='<div class="card kw-card"><div class="kw-title">'+kw+' ('+cnt+' thread'+(cnt>1?'s':'')+')</div>';
+    matching.slice(0,3).forEach(function(t){
+      var col=SC[t.sentiment.label]||'#8a8fa8';
+      kwHTML+='<div class="kw-item"><span style="color:'+col+'">&#9679;</span> '+t.title+'</div>';
+      kwHTML+='<div class="kw-phrase">&#8226; '+(t.mood_phrase||'Sentiment analysis in progress')+'</div>';
+    });
+    kwHTML+='</div>';
+  });
+  kwHTML+='</div>';
+}else{kwHTML='<p style="color:var(--muted);font-size:13px;padding:16px">No tracked keywords found this week.</p>';}
+document.getElementById('kwContent').innerHTML=kwHTML;
+
+document.getElementById('hotTopics').innerHTML='<span style="color:var(--muted);font-size:13px">Will auto-detect after multiple days of data.</span>';
+
+const tDays=TREND.map(d=>d.day);
+new Chart(document.getElementById('trendLine'),{type:'line',data:{labels:tDays,datasets:[{data:TREND.map(d=>d.score),borderColor:'#e8a020',backgroundColor:'rgba(232,160,32,0.07)',tension:0.4,fill:true,pointBackgroundColor:'#e8a020',pointRadius:6}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}},y:{min:-1,max:1,ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}}}}});
+new Chart(document.getElementById('countBar'),{type:'bar',data:{labels:tDays,datasets:[{data:TREND.map(d=>d.count),backgroundColor:'#4a8fe8',borderRadius:3}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}},y:{ticks:{color:'#8a8fa8',stepSize:1,font:{size:9}},grid:{color:'#1c2333'}}}}});
+new Chart(document.getElementById('stackBar'),{type:'bar',data:{labels:tDays,datasets:[
+  {label:'Very Positive',data:TREND.map(d=>d["Very Positive"]||0),backgroundColor:'#22c55e',borderRadius:2},
+  {label:'Positive',data:TREND.map(d=>d.Positive||0),backgroundColor:'#86efac',borderRadius:2},
+  {label:'Neutral',data:TREND.map(d=>d.Neutral||0),backgroundColor:'#8a8fa8',borderRadius:2},
+  {label:'Concerned',data:TREND.map(d=>d.Concerned||0),backgroundColor:'#ef4444',borderRadius:2},
+  {label:'Very Concerned',data:TREND.map(d=>d["Very Concerned"]||0),backgroundColor:'#991b1b',borderRadius:2},
+]},options:{plugins:{legend:{labels:{color:'#8a8fa8',font:{size:8},boxWidth:9}}},scales:{x:{stacked:true,ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}},y:{stacked:true,ticks:{color:'#8a8fa8',font:{size:9}},grid:{color:'#1c2333'}}}}});
+
+var sel=null;
+document.getElementById('threadList').innerHTML=THREADS.map(function(t,i){
+  return '<div class="tr" id="r'+i+'" onclick="pick('+i+')">' +
+  '<div class="tdot" style="background:'+t.sentiment.color+'"></div>' +
+  '<div style="flex:1;min-width:0"><div class="tt">'+t.title+'</div>' +
+  '<div class="tc">'+t.category+(t.keywords&&t.keywords.length?' &nbsp;&#9873; '+t.keywords.join(', '):'')+'</div></div>' +
+  '<div style="text-align:right;flex-shrink:0">' +
+  '<div style="font-family:DM Mono,monospace;font-size:10px;color:'+t.sentiment.color+'">'+t.sentiment.label+'</div>' +
+  '<div style="font-family:DM Mono,monospace;font-size:9px;color:#8a8fa8">'+t.replies+'r &middot; '+t.views.toLocaleString()+'v</div>' +
+  '</div></div>';
+}).join('');
+
+function pick(i){
+  if(sel!==null)document.getElementById('r'+sel).classList.remove('sel');
+  sel=i;document.getElementById('r'+i).classList.add('sel');
+  var t=THREADS[i],cc=CC[t.category]||'#8a8fa8';
+  document.getElementById('detPanel').innerHTML=
+    '<div class="de">Thread Detail &mdash; No usernames</div>'+
+    '<div class="dt">'+t.title+'</div>'+
+    '<div><span class="bdg" style="background:'+t.sentiment.color+'22;color:'+t.sentiment.color+'">'+t.sentiment.label+'</span>'+
+    '<span class="bdg" style="background:'+cc+'22;color:'+cc+'">'+t.category+'</span></div>'+
+    '<div style="font-family:DM Mono,monospace;font-size:10px;color:#8a8fa8;margin-bottom:12px;padding:8px;background:#0a0d14;border-radius:2px">&#8226; '+(t.mood_phrase||'Sentiment analysis in progress')+'</div>'+
+    [['Replies',t.replies],['Views',t.views.toLocaleString()],['Engagement',t.engagement],['Sentiment Score',t.sentiment.score],['Comments Read',t.comment_count||0]]
+      .map(function(kv){return '<div class="dr"><span class="dk">'+kv[0]+'</span><span class="dv">'+kv[1]+'</span></div>';}).join('')+
+    (t.keywords&&t.keywords.length?'<div style="margin-top:12px;font-family:DM Mono,monospace;font-size:9px;color:#e8a020">&#9873; Keyword flags: '+t.keywords.join(', ')+'</div>':'')+
+    (t.link?'<a style="display:block;margin-top:16px;text-align:center;color:var(--gold);font-family:DM Mono,monospace;font-size:9px;letter-spacing:2px;text-decoration:none;border:1px solid rgba(232,160,32,.3);padding:7px;border-radius:2px" href="'+t.link+'" target="_blank">View Thread &#8594;</a>':'');
+}
+
+var mA=THREADS.reduce((a,b)=>a.replies>b.replies?a:b);
+var mV=THREADS.reduce((a,b)=>a.views>b.views?a:b);
+var con=THREADS.filter(t=>t.sentiment.label==="Concerned"||t.sentiment.label==="Very Concerned");
+var mC=con.length>0?con.sort((a,b)=>b.engagement-a.engagement)[0]:THREADS[0];
+document.getElementById('hiGrid').innerHTML=[
+  {ico:"&#128172;",l:"Most Active",t:mA},
+  {ico:"&#128065;",l:"Most Viewed",t:mV},
+  {ico:"&#9888;",l:"Most Concerned",t:mC},
+].map(function(h){return '<div class="card" style="padding:20px"><div style="font-size:20px;margin-bottom:8px">'+h.ico+'</div>'+
+  '<div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px">'+h.l.toUpperCase()+'</div>'+
+  '<div style="font-size:14px;font-weight:600;color:'+h.t.sentiment.color+'">'+h.t.title+'</div>'+
+  '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:6px">'+h.t.replies+' replies &middot; '+h.t.views.toLocaleString()+' views</div></div>';}).join('');
+
+function sw(name){
+  var ns=['overview','keywords','trends','threads','ai'];
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',ns[i]===name);});
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('pane-'+name).classList.add('active');
+}
+
+async function getAI(){
+  var btn=document.getElementById('aiBtn');
+  btn.disabled=true;btn.textContent='Analysing...';
+  var summary=THREADS.map(function(t){
+    return '"'+t.title+'" ['+t.sentiment.label+', score:'+t.sentiment.score+'] replies:'+t.replies+' views:'+t.views+(t.keywords&&t.keywords.length?' keywords:'+t.keywords.join(','):'');
+  }).join('\n');
+  var kwSummary=Object.entries(KW_MAP).map(function(e){return e[0]+': '+e[1]+' threads';}).join(', ');
+  var trendSummary=TREND.map(function(d){return d.day+': avg '+d.score+', '+d.count+' threads';}).join('\n');
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,messages:[{role:'user',
+        content:'You are a senior analyst for a Mustang GTD enthusiast forum. Week of '+WEEK+'.\n\nIMPORTANT: Do NOT mention any usernames.\n\nThreads:\n'+summary+'\n\nKeywords: '+kwSummary+'\n\nTrend:\n'+trendSummary+'\n\nWrite a sharp 4-paragraph report: (1) Overall mood and sentiment shifts, (2) Hottest threads and owner priorities, (3) Keyword signal analysis for titling/liens, delivery delays, paint, scheduling, (4) What to watch next week. Name specific threads. No usernames.'}]})});
+    var data=await res.json();
+    document.getElementById('aiOut').innerHTML='<div class="ai-out"><div class="ai-ey">AI Analysis &mdash; '+new Date().toLocaleString()+'</div>'+
+      data.content[0].text.split('\n\n').map(function(p){return '<p>'+p+'</p>';}).join('')+'</div>';
+  }catch(e){
+    document.getElementById('aiOut').innerHTML='<p style="color:#e05555;margin-top:14px">Could not load analysis. Please try again.</p>';
+  }
+  btn.disabled=false;btn.textContent='Generate Weekly Analysis';
+}
+</script>
+</body>
+</html>
